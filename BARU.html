@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArCell Store</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 25%, #24243e 50%, #667eea 75%, #764ba2 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
+  position: relative;
+  overflow-x: hidden;
+  color: #fff;
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('https://www.transparenttextures.com/patterns/stardust.png') repeat, radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(120, 219, 226, 0.3) 0%, transparent 50%);
+  opacity: 0.2;
+  pointer-events: none;
+  animation: float 30s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(1deg); }
+  50% { transform: translateY(0px) rotate(0deg); }
+  75% { transform: translateY(10px) rotate(-1deg); }
+}
+.overlay{
+  min-height:100vh;
+  background:rgba(255,255,255,.05);
+  backdrop-filter: blur(15px);
+  padding:16px 10px;
+  position:relative;
+  border-radius: 25px;
+  box-shadow: inset 0 0 60px rgba(255,255,255,.1), 0 0 100px rgba(102,126,234,.2);
+  animation: glowPulse 5s ease-in-out infinite alternate;
+}
+@keyframes glowPulse {
+  from { box-shadow: inset 0 0 60px rgba(255,255,255,.1), 0 0 100px rgba(102,126,234,.2); }
+  to { box-shadow: inset 0 0 80px rgba(255,255,255,.2), 0 0 150px rgba(118,75,162,.3); }
+}
+.loading-overlay{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: linear-gradient(45deg, rgba(15,12,41,0.9), rgba(48,43,99,0.9), rgba(36,36,62,0.9), rgba(102,126,234,0.9), rgba(118,75,162,0.9));
+  background-size: 400% 400%;
+  animation: gradientShift 12s ease infinite;
+  display:flex;
+  flex-direction: column;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+  animation:fadeOut 3s ease-in-out forwards;
+}
+@keyframes fadeOut{
+  0%{opacity:1}
+  80%{opacity:1}
+  100%{opacity:0;pointer-events:none}
+}
+#lotiie-loading{
+  width:150px;
+  height:150px;
+}
+.loading-text {
+  color: #fff;
+  font-size: 18px;
+  margin-top: 10px;
+  animation: blink 1.5s infinite, glow 2s ease-in-out infinite alternate;
+}
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+@keyframes glow {
+  from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff; }
+  to { text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff; }
+}
+.container{
+  max-width:720px;
+  margin:auto;
+  background: rgba(255,255,255,.1);
+  border-radius:25px;
+  padding:20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.2), 0 0 60px rgba(255,255,255,.1);
+  animation:fadeSlide .6s ease;
+  border: 1px solid rgba(255,255,255,.2);
+  backdrop-filter: blur(10px);
+}
+@keyframes fadeSlide{
+  from{opacity:0;transform:translateY(25px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* HEADER */
+.header{text-align:center;color:#fff}
+.header h1{margin:0;font-size:28px;animation:bounceIn .8s ease; background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #f5576c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; text-shadow: 0 0 20px rgba(102,126,234,.5);}
+@keyframes bounceIn{
+  0%{transform:scale(0.3);opacity:0}
+  50%{transform:scale(1.05)}
+  70%{transform:scale(0.9)}
+  100%{transform:scale(1);opacity:1}
+}
+.header p{margin:4px 0 0;color:#ddd;font-size:16px;animation:fadeInUp .8s ease .2s both; text-shadow: 0 0 10px rgba(255,255,255,.5);}
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* GAME SELECT */
+.game-select{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+  margin-top:20px;
+}
+.game-card{
+  background: linear-gradient(135deg, #f093fb, #f5576c, #4facfe);
+  border-radius:16px;
+  padding:18px;
+  display:flex;
+  align-items:center;
+  gap:15px;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:.4s ease;
+  animation:slideInLeft .6s ease forwards;
+  opacity:0;
+  box-shadow: 0 5px 15px rgba(0,0,0,.2);
+  position: relative;
+  overflow: hidden;
+}
+.game-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,.1), transparent);
+  transform: rotate(45deg);
+  transition: all 0.5s;
+  opacity: 0;
+}
+.game-card:hover::before {
+  opacity: 1;
+  animation: shimmer 0.8s ease-in-out;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+.game-card:nth-child(1){animation-delay:.4s}
+.game-card:nth-child(2){animation-delay:.6s}
+@keyframes slideInLeft{
+  from{opacity:0;transform:translateX(-30px)}
+  to{opacity:1;transform:translateX(0)}
+}
+.game-card:hover{
+  transform:translateY(-8px) scale(1.02);
+  box-shadow:0 10px 25px rgba(245,87,108,.4);
+  border-color: rgba(255,255,255,.5);
+}
+.game-card img{
+  width:50px;
+  height:50px;
+  border-radius:12px;
+  object-fit:cover;
+  transition:.3s;
+  border: 2px solid rgba(255,255,255,.3);
+}
+.game-card:hover img{transform:rotate(10deg) scale(1.1)}
+.game-card span{color:#fff;font-weight:bold;font-size:16px}
+.game-card.active{
+  border-color:#fff;
+  box-shadow:0 0 20px rgba(245,87,108,.8);
+  background: linear-gradient(135deg, #4facfe, #00f2fe, #667eea);
+}
+.game-card:active{transform:scale(.95)}
+
+/* INPUT */
+input,button{
+  width:100%;
+  padding:15px;
+  margin-top:16px;
+  border-radius:12px;
+  border:none;
+  font-size:16px;
+  transition:.3s;
+}
+input{
+  background: rgba(255,255,255,.1);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.2);
+  animation:slideInUp .5s ease .8s both;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,.2);
+  backdrop-filter: blur(5px);
+}
+@keyframes slideInUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+input:focus{
+  border-color:#4facfe;
+  box-shadow:0 0 10px rgba(79,172,254,.5), inset 0 2px 5px rgba(0,0,0,.2);
+  animation:shake .3s ease;
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  75%{transform:translateX(5px)}
+}
+button{
+  background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+  color:#fff;
+  font-weight:bold;
+  cursor:pointer;
+  animation:slideInUp .5s ease 1s both;
+  box-shadow: 0 5px 15px rgba(102,126,234,.3);
+}
+button:hover{background: linear-gradient(135deg, #764ba2, #667eea, #f5576c); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(102,126,234,.5); animation:bounce .5s ease}
+@keyframes bounce{
+  0%,20%,50%,80%,100%{transform:translateY(0)}
+  40%{transform:translateY(-10px)}
+  60%{transform:translateY(-5px)}
+}
+button:active{transform:scale(.97)}
+
+/* TAB */
+.tab{
+  display:flex;
+  gap:12px;
+  margin-top:16px;
+  animation:slideInUp .5s ease 1.2s both;
+}
+.tab-btn{
+  flex:1;
+  padding:14px;
+  background: rgba(255,255,255,.1);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:12px;
+  cursor:pointer;
+  transition:.3s;
+  box-shadow: 0 2px 5px rgba(0,0,0,.2);
+  backdrop-filter: blur(5px);
+}
+.tab-btn:hover{background: rgba(102,126,234,.2); transform:scale(1.05); border-color: #667eea;}
+.tab-btn.active{background: linear-gradient(135deg, #667eea, #764ba2, #f093fb); color: #fff; animation:pulse .5s ease; border-color: transparent;}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(102,126,234,.7)}
+  70%{box-shadow:0 0 0 10px rgba(102,126,234,0)}
+  100%{box-shadow:0 0 0 0 rgba(102,126,234,0)}
+}
+
+/* PRODUCTS */
+.products{
+  margin-top:16px;
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:15px;
+}
+.product{
+  background: linear-gradient(135deg, rgba(255,255,255,.1), rgba(240,147,251,.1));
+  border-radius:14px;
+  padding:16px;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:.3s;
+  animation:productFadeIn .5s ease forwards;
+  opacity:0;
+  box-shadow: 0 3px 10px rgba(0,0,0,.2);
+  backdrop-filter: blur(5px);
+  position: relative;
+  overflow: hidden;
+}
+@keyframes productFadeIn{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.product::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+  transition: left 0.5s;
+}
+.product:hover::after {
+  left: 100%;
+}
+.product:hover{
+  transform:translateY(-5px) scale(1.02);
+  box-shadow:0 8px 20px rgba(240,147,251,.3);
+  border-color: rgba(240,147,251,.5);
+}
+.product.active{
+  border-color:#f5576c;
+  box-shadow:0 0 15px rgba(245,87,108,.6);
+  background: linear-gradient(135deg, rgba(245,87,108,.2), rgba(240,147,251,.2));
+}
+.product:active{transform:scale(.95)}
+.product .name{color:#fff;font-size:15px;font-weight:500}
+.product .price{color:#f5576c;font-weight:bold;font-size:14px;margin-top:8px}
+
+/* TOTAL */
+.total{
+  margin-top:16px;
+  padding:14px;
+  background: linear-gradient(135deg, rgba(255,255,255,.1), rgba(79,172,254,.1));
+  border-radius:12px;
+  color:#fff;
+  text-align:center;
+  font-weight:bold;
+  animation:slideInUp .5s ease 1.4s both;
+  box-shadow: 0 3px 10px rgba(0,0,0,.2);
+  border: 1px solid rgba(79,172,254,.3);
+  backdrop-filter: blur(5px);
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:99;
+  animation:fadeIn .3s ease;
+  backdrop-filter: blur(10px);
+}
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+.modal-box{
+  background: rgba(255,255,255,.1);
+  padding:24px;
+  border-radius:16px;
+  width:90%;
+  max-width:380px;
+  color:#fff;
+  animation:modalSlideIn .4s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.2);
+  backdrop-filter: blur(10px);
+}
+@keyframes modalSlideIn{
+  from{opacity:0;transform:scale(0.8) translateY(-20px)}
+  to{opacity:1;transform:scale(1) translateY(0)}
+}
+.modal-box h3{text-align:center;margin-top:0;color:#fff;font-size:20px}
+.modal-box p{font-size:15px;margin:10px 0}
+.modal-box button{
+  width:48%;
+  margin:5px;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  font-size:15px;
+  cursor:pointer;
+  transition:.3s;
+}
+.modal-box button:first-child{background: linear-gradient(135deg, #667eea, #764ba2); color:#fff;}
+.modal-box button:first-child:hover{background: linear-gradient(135deg, #764ba2, #667eea);}
+.modal-box button:last-child{background:#ccc; color:#333;}
+.modal-box button:last-child:hover{background:#bbb;}
+
+.footer{
+  text-align:center;
+  color:#ddd;
+  font-size:13px;
+  margin-top:16px;
+  animation:fadeInUp .5s ease 1.6s both;
+  text-shadow: 0 0 10px rgba(255,255,255,.5);
+}
+
+/* MOBILE */
+@media(max-width:600px){
+  .game-select{grid-template-columns:1fr}
+  .products{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<div class="overlay">
+  <div class="loading-overlay" id="loadingOverlay">
+    <div id="lottie-loading"></div>
+    <div class="loading-text">Loading ArCell Store...</div>
+  </div>
+<div class="container">
+
+<div class="header">
+  <h1>ArCell Store</h1>
+  <p>Top Up Game Online</p>
+</div>
+
+<div class="game-select">
+  <div class="game-card" onclick="selectGame('ML',this)">
+    <img src="https://img.lapakgaming.com/?src=https%3A%2F%2Fwww.lapakgaming.com%2Fstatic%2Fcategory%2FBeli+ML+Diamond.png&w=360&q=75&f=webp&onerror=redirect">
+    <span>Mobile Legends</span>
+  </div>
+  <div class="game-card" onclick="selectGame('FF',this)">
+    <img src="https://img.lapakgaming.com/?src=https%3A%2F%2Fwww.lapakgaming.com%2Fstatic%2Fcategory%2FTopup+FF+Diamond+Diskon.png&w=360&q=75&f=webp&onerror=redirect">
+    <span>Free Fire</span>
+  </div>
+</div>
+
+<input type="text" id="playerId" placeholder="Masukkan User ID / Player ID">
+
+<div class="tab">
+  <button class="tab-btn active" onclick="setCategory('diamond',this)">Diamond</button>
+  <button class="tab-btn" onclick="setCategory('membership',this)">Membership</button>
+</div>
+
+<div class="products" id="productList"></div>
+
+<div class="total" id="total">Total: Rp0</div>
+
+<button onclick="checkout()">Checkout via WhatsApp</button>
+
+<div class="footer">© 2026 ArCell Store</div>
+
+</div>
+</div>
+
+<div class="modal" id="invoiceModal">
+  <div class="modal-box">
+    <h3>Invoice Pesanan</h3>
+    <p id="invGame"></p>
+    <p id="invId"></p>
+    <p id="invProduct"></p>
+    <p id="invTotal"></p>
+    <button onclick="sendWA()">Kirim ke WhatsApp</button>
+    <button style="background:#333" onclick="closeInvoice()">Batal</button>
+  </div>
+</div>
+
+<script>
+let game="",category="diamond",selected="",price=0;
+
+const data={
+ML:{
+diamond:[
+["5 Diamond",2000],["12 Diamond",5000],["20 Diamond",7000],
+["30 Diamond",10000],["42 Diamond",13000],["50 Diamond",15000],
+["60 Diamond",18000],["70 Diamond",22000],["85 Diamond",24000],
+["110 Diamond",30000],["128 Diamond",36000],["140 Diamond",40000],
+["170 Diamond",47000],["176 Diamond",50000],["194 Diamond",53000],
+["210 Diamond",60000],["250 Diamond",69000],["284 Diamond",80000],
+["300 Diamond",82000],["344 Diamond",92000],["350 Diamond",95000],
+["381 Diamond",105000],["568 Diamond",147000],["878 Diamond",225000],
+["1220 Diamond",315000],["2010 Diamond",490000]
+],
+membership:[
+["Weekly Diamond Pass",31000],
+["Weekly Diamond Pass 2x",59000],
+["Weekly Diamond Pass 3x",87000],
+["Starlight Member",105000],
+["Twilight Pass",150000]
+]
+},
+FF:{
+diamond:[
+["20 Diamond",5000],["50 Diamond",8000],["60 Diamond",10000],
+["80 Diamond",12000],["100 Diamond",15000],["120 Diamond",17500],
+["140 Diamond",20000],["170 Diamond",25000],["190 Diamond",27000],
+["210 Diamond",29000],["250 Diamond",36500],["280 Diamond",39000],
+["300 Diamond",41500],["350 Diamond",47000],["375 Diamond",50000],
+["400 Diamond",55000],["475 Diamond",65000],["500 Diamond",68000],
+["545 Diamond",73000],["565 Diamond",75000],["655 Diamond",90000],
+["720 Diamond",95000],["770 Diamond",100000],["800 Diamond",105000],["860 Diamond",110000]
+],
+membership:[
+["Membership Mingguan",30.000],
+["Membership Mingguan 2x",59.000],
+["Membership Mingguan 3x",87.000],
+["Level Upp Pass",16.500],
+["Membership Bulanan",88.000]
+]
+}
+};
+
+function selectGame(g,el){
+  game=g;
+  document.querySelectorAll('.game-card').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderProducts();
+}
+
+function setCategory(cat,el){
+  category=cat;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderProducts();
+}
+
+function renderProducts(){
+  const list=document.getElementById('productList');
+  list.innerHTML='';
+  selected='';
+  price=0;
+  document.getElementById('total').innerText='Total: Rp0';
+  if(!game) return;
+  data[game][category].forEach((p,i)=>{
+    const div=document.createElement('div');
+    div.className='product';
+    div.innerHTML=`<div class="name">${p[0]}</div><div class="price">Rp${p[1].toLocaleString()}</div>`;
+    div.onclick=()=>{
+      document.querySelectorAll('.product').forEach(x=>x.classList.remove('active'));
+      div.classList.add('active');
+      selected=p[0];
+      price=p[1];
+      document.getElementById('total').innerText='Total: Rp'+price.toLocaleString();
+    };
+    list.appendChild(div);
+  });
+}
+
+function checkout(){
+  if(!game||!selected||!playerId.value){
+    alert('Lengkapi data terlebih dahulu');
+    return;
+  }
+  invGame.innerText='Game: '+(game==='ML'?'Mobile Legends':'Free Fire');
+  invId.innerText='User ID: '+playerId.value;
+  invProduct.innerText='Produk: '+selected;
+  invTotal.innerText='Total: Rp'+price.toLocaleString();
+  invoiceModal.style.display='flex';
+}
+
+function closeInvoice(){
+  invoiceModal.style.display='none';
+}
+
+function sendWA(){
+  const msg=`Halo ArCell Store%0A
+Game: ${game}%0A
+User ID: ${playerId.value}%0A
+Produk: ${selected}%0A
+Total: Rp${price.toLocaleString()}`;
+  window.open('https://wa.me/6282135343774?text='+msg,'_blank');
+}
+
+lottie.loadAnimation({
+  container: document.getElementById('lottie-loading'),
+  renderer: 'svg',
+  loop: true,
+  autoplay: true,
+  path: 'https://assets2.lottiefiles.com/packages/lf20_usmfx6bp.json'
+});
+</script>
+
+</body>
+</html>
+
+
